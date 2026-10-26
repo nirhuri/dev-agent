@@ -12,6 +12,10 @@ import (
 )
 
 func runImplement(cmd *cobra.Command, cfg config.Config, db *store.SQLite, task *workflow.Task) error {
+	if err := ensureTaskBranch(cmd, cfg, db, task); err != nil {
+		return err
+	}
+
 	eng, err := newEngine(cfg)
 	if err != nil {
 		return err
@@ -68,7 +72,7 @@ func runImplement(cmd *cobra.Command, cfg config.Config, db *store.SQLite, task 
 	if _, err := db.Transition(cmd.Context(), task.ID, workflow.StateValidating, "engine completed; validate next"); err != nil {
 		return err
 	}
-	fmt.Fprintln(cmd.OutOrStdout(), "State -> VALIDATING. Git/validation steps arrive in the next milestone.")
-	fmt.Fprintln(cmd.OutOrStdout(), "Note: engine exit success is not proof of a correct change; validation will verify.")
-	return nil
+	fmt.Fprintln(cmd.OutOrStdout(), "State -> VALIDATING")
+	fmt.Fprintln(cmd.OutOrStdout(), "Note: engine exit success is not proof of a correct change; running validation next.")
+	return runValidateAndCommit(cmd, cfg, db, task)
 }

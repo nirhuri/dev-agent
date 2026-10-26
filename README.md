@@ -83,6 +83,14 @@ Tasks are stored in SQLite at `~/.local/share/dev-agent/tasks.db` (override with
 
 States include clarification wait, failure, and cancellation so work can be inspected and resumed safely.
 
+### Git safety
+
+- Never commits on `main`/`master` (configurable protected branches)
+- Creates `agent/<KEY>-slug` task branches
+- Stages explicit paths only (never `git add .`)
+- Refuses likely secret files (`.env`, `*.pem`, etc.)
+- Bounded repair loop after validation failures (`validation.repair_attempts`)
+
 ### Issues
 
 ```bash
