@@ -58,8 +58,32 @@ func newRunCmd() *cobra.Command {
 			if repo != "" {
 				fmt.Fprintf(cmd.OutOrStdout(), "Repository: %s\n", filepath.Clean(repo))
 			}
-			fmt.Fprintln(cmd.OutOrStdout(), "Use `dev-agent status` to inspect and `dev-agent resume` to continue.")
-			fmt.Fprintln(cmd.OutOrStdout(), "Analysis/implementation engines are wired in later milestones.")
+
+			eng, err := newEngine(cfg)
+			if err != nil {
+				return err
+			}
+			cap, err := eng.CheckAvailability(cmd.Context())
+			if err != nil {
+				fmt.Fprintf(cmd.OutOrStdout(), "Coding engine unavailable: %v\n", err)
+				fmt.Fprintln(cmd.OutOrStdout(), "Task is persisted; fix the engine then `dev-agent resume`.")
+				return nil
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "Coding engine: %s (%s)\n", cap.Provider, cap.AutomationLevel)
+
+			if task.State == workflow.StateIssueSelected {
+				if _, err := db.Transition(cmd.Context(), task.ID, workflow.StateAnalyzing, "begin analysis"); err != nil {
+					return err
+				}
+				task.Plan = fmt.Sprintf("Implement %s: %s", task.IssueKey, task.IssueSummary)
+				if err := db.UpdateTask(cmd.Context(), task); err != nil {
+					return err
+				}
+				if _, err := db.Transition(cmd.Context(), task.ID, workflow.StatePlanReady, "plan drafted"); err != nil {
+					return err
+				}
+				fmt.Fprintln(cmd.OutOrStdout(), "Plan ready. Use `dev-agent resume` to implement with the coding engine.")
+			}
 			return nil
 		},
 	}

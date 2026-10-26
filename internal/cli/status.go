@@ -96,8 +96,15 @@ func newResumeCmd() *cobra.Command {
 				return runAnswerClarifications(cmd, svc, task)
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Task is ready. Full workflow execution arrives in later milestones.")
-			fmt.Fprintln(cmd.OutOrStdout(), "Repository/config/credential revalidation will run before implementation steps.")
+			cfg, _, err := loadConfigFromCmd(cmd)
+			if err != nil {
+				return err
+			}
+			if task.State == workflow.StatePlanReady || task.State == workflow.StateImplementing {
+				return runImplement(cmd, cfg, db, task)
+			}
+
+			fmt.Fprintln(cmd.OutOrStdout(), "Task is ready for later workflow stages (validation/PR).")
 			return nil
 		},
 	}

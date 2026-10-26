@@ -73,6 +73,10 @@ See [config.example.yaml](config.example.yaml) for the full schema.
 | `dev-agent status` | Show active (or `--all`) tasks |
 | `dev-agent resume [ID\|KEY]` | Resume paused work / answer clarifications |
 
+### Cursor engine
+
+See [docs/cursor-engine.md](docs/cursor-engine.md) for verified CLI flags, automation level, and limits.
+
 ### Task persistence
 
 Tasks are stored in SQLite at `~/.local/share/dev-agent/tasks.db` (override with `DEV_AGENT_DATA_DIR`). The driver is pure Go (`modernc.org/sqlite`) and does **not** require CGO.

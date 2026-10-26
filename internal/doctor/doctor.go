@@ -55,6 +55,7 @@ func Run(ctx context.Context, cfg config.Config, configSource string) Report {
 	results = append(results, checkJira(cfg))
 	results = append(results, checkCursorAgent(ctx, cfg))
 	results = append(results, checkDataDir())
+	results = append(results, checkEngineCapability(ctx, cfg))
 
 	return Report{Results: results}
 }
@@ -187,6 +188,35 @@ func checkCursorAgent(ctx context.Context, cfg config.Config) Result {
 		Name:     "cursor-agent",
 		Severity: SeverityOK,
 		Message:  msg,
+	}
+}
+
+func checkEngineCapability(ctx context.Context, cfg config.Config) Result {
+	// Deferred import cycle avoidance: inline LookPath-based summary here;
+	// full capability notes come from the cursor adapter when available.
+	path := cfg.Engine.AgentPath
+	if path == "" {
+		path = "agent"
+	}
+	if _, err := exec.LookPath(path); err != nil {
+		return Result{
+			Name:     "engine-automation",
+			Severity: SeverityWarn,
+			Message:  "unavailable — Cursor agent CLI not found",
+			Fix:      "Install agent CLI; see docs/cursor-engine.md",
+		}
+	}
+	level := "unattended"
+	msg := "Cursor agent supports --print/--workspace for scripted runs"
+	if cfg.Mode == "interactive" {
+		msg += " (interactive mode omits --force)"
+	} else {
+		msg += " (autonomous mode uses --force)"
+	}
+	return Result{
+		Name:     "engine-automation",
+		Severity: SeverityOK,
+		Message:  fmt.Sprintf("%s; level=%s", msg, level),
 	}
 }
 
