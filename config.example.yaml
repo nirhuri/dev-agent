@@ -1,0 +1,33 @@
+# Example configuration for dev-agent.
+# Copy to ~/.config/dev-agent/config.yaml or run `dev-agent setup`.
+# NEVER put API tokens or passwords in this file — use the OS keyring via setup/config.
+
+version: 1
+mode: interactive # interactive | autonomous
+
+jira:
+  base_url: https://YOUR_ORG.atlassian.net
+  email: you@example.com
+  project_key: APP
+  jql: "" # optional override; empty uses project_key filter
+  max_results: 50
+
+engine:
+  provider: cursor
+  agent_path: agent
+  model: "" # optional; empty uses agent default
+
+git:
+  protected_branches:
+    - main
+    - master
+  branch_prefix: agent/
+  pr_provider: github
+
+validation:
+  commands: [] # empty = auto-detect from repository
+  repair_attempts: 3
+
+repositories:
+  - name: my-app
+    path: /absolute/path/to/my-app
