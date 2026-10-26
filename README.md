@@ -68,8 +68,22 @@ See [config.example.yaml](config.example.yaml) for the full schema.
 | `dev-agent setup` | First-time wizard |
 | `dev-agent config` | Inspect / update settings |
 | `dev-agent doctor` | Validate config and tools |
+| `dev-agent issues` | List / search / select Jira issues |
 
-Upcoming: `issues`, `run`, `status`, `resume`.
+Upcoming: `run`, `status`, `resume`.
+
+### Issues
+
+```bash
+dev-agent issues
+dev-agent issues --project APP --status "To Do"
+dev-agent issues --search auth
+dev-agent issues --select APP-142
+```
+
+Interactive commands: `#` select by number, `/text` search, `f` filter, `r` refresh, `q` quit.
+
+For automation, `DEV_AGENT_JIRA_TOKEN` can supply the API token instead of the keyring.
 
 ## Security
 

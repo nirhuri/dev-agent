@@ -46,6 +46,7 @@ func NewRootCmd(stdout, stderr io.Writer) *cobra.Command {
 	root.AddCommand(newSetupCmd())
 	root.AddCommand(newConfigCmd())
 	root.AddCommand(newDoctorCmd())
+	root.AddCommand(newIssuesCmd())
 
 	return root
 }
@@ -79,7 +80,7 @@ func runRoot(cmd *cobra.Command, configFile string) error {
 		fmt.Fprintln(cmd.OutOrStdout(), "Jira: not configured")
 	}
 	fmt.Fprintln(cmd.OutOrStdout())
-	fmt.Fprintln(cmd.OutOrStdout(), "Next: `dev-agent issues` (coming soon) or `dev-agent doctor`.")
+	fmt.Fprintln(cmd.OutOrStdout(), "Next: `dev-agent issues` or `dev-agent doctor`.")
 	return nil
 }
 
