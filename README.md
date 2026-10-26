@@ -1,1 +1,90 @@
 # dev-agent
+
+Personal CLI that takes a Jira issue through planning, implementation (via Cursor Agent), validation, commits, and a GitHub pull request.
+
+## Prerequisites
+
+- Go 1.22+ (developed with Go 1.27)
+- Git
+- [GitHub CLI](https://cli.github.com/) (`gh`) for PR creation
+- [Cursor Agent CLI](https://cursor.com/docs) (`agent`) for coding-engine automation
+- Jira Cloud account with an [API token](https://id.atlassian.com/manage-profile/security/api-tokens)
+
+## Install
+
+```bash
+git clone https://github.com/nirhuri/dev-agent.git
+cd dev-agent
+go install ./cmd/dev-agent
+```
+
+Or build locally:
+
+```bash
+go build -o bin/dev-agent ./cmd/dev-agent
+./bin/dev-agent --help
+```
+
+## First-run setup
+
+```bash
+dev-agent setup
+dev-agent doctor
+```
+
+Setup writes `~/.config/dev-agent/config.yaml` (mode `0600`) and stores secrets in the **OS keyring** (macOS Keychain via `zalando/go-keyring`). Tokens never go in the config file.
+
+## Configuration
+
+| Source | Precedence |
+|--------|------------|
+| Environment (`DEV_AGENT_*`) | Highest |
+| Config file | Middle |
+| Built-in defaults | Lowest |
+
+Useful commands:
+
+```bash
+dev-agent config show          # redacted view
+dev-agent config set mode autonomous
+dev-agent config set-secret jira_token
+dev-agent config path
+dev-agent doctor
+```
+
+Override paths:
+
+- `DEV_AGENT_CONFIG_DIR` — config directory
+- `DEV_AGENT_DATA_DIR` — local data (task DB)
+- `--config /path/to/config.yaml` — explicit file
+
+See [config.example.yaml](config.example.yaml) for the full schema.
+
+## Commands (current)
+
+| Command | Description |
+|---------|-------------|
+| `dev-agent` | Welcome / status when configured |
+| `dev-agent setup` | First-time wizard |
+| `dev-agent config` | Inspect / update settings |
+| `dev-agent doctor` | Validate config and tools |
+
+Upcoming: `issues`, `run`, `status`, `resume`.
+
+## Security
+
+- Secrets live in the OS keyring, not YAML.
+- `config show` and logs never print token values.
+- Do not commit `.env` files or real credentials.
+
+## Development
+
+```bash
+gofmt -w .
+go vet ./...
+go test ./...
+```
+
+## License
+
+Private / personal use unless otherwise stated.
