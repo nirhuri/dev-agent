@@ -1,6 +1,7 @@
 # Binaries
 /dev-agent
 /bin/
+bin/
 *.exe
 *.test
 *.out

@@ -161,13 +161,14 @@ func (s *SQLite) UpdateTask(ctx context.Context, task *workflow.Task) error {
 	clar, _ := json.Marshal(task.Clarifications)
 	valid, _ := json.Marshal(task.Validation)
 	commits, _ := json.Marshal(task.CommitHashes)
+	// State changes only via Transition to keep the audit trail authoritative.
 	res, err := s.db.ExecContext(ctx, `
 UPDATE tasks SET
-  issue_summary=?, repository=?, branch=?, engine=?, state=?, plan=?,
+  issue_summary=?, repository=?, branch=?, engine=?, plan=?,
   clarifications_json=?, validation_json=?, commit_hashes_json=?, pr_url=?,
   error_message=?, repair_attempt=?, updated_at=?
 WHERE id=?`,
-		task.IssueSummary, task.Repository, task.Branch, task.Engine, string(task.State), task.Plan,
+		task.IssueSummary, task.Repository, task.Branch, task.Engine, task.Plan,
 		string(clar), string(valid), string(commits), task.PRURL,
 		task.ErrorMessage, task.RepairAttempt, task.UpdatedAt.Format(time.RFC3339Nano), task.ID,
 	)

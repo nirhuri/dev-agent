@@ -1,6 +1,6 @@
 # dev-agent
 
-Personal CLI that takes a Jira issue through planning, implementation (via Cursor Agent), validation, commits, and a GitHub pull request.
+Personal CLI that takes a Jira issue through planning, implementation (via Cursor Agent), validation, commits, and a GitHub pull request — without auto-merging.
 
 ## Prerequisites
 
@@ -16,13 +16,7 @@ Personal CLI that takes a Jira issue through planning, implementation (via Curso
 git clone https://github.com/nirhuri/dev-agent.git
 cd dev-agent
 go install ./cmd/dev-agent
-```
-
-Or build locally:
-
-```bash
-go build -o bin/dev-agent ./cmd/dev-agent
-./bin/dev-agent --help
+# or: make build && ./bin/dev-agent --help
 ```
 
 ## First-run setup
@@ -32,7 +26,39 @@ dev-agent setup
 dev-agent doctor
 ```
 
-Setup writes `~/.config/dev-agent/config.yaml` (mode `0600`) and stores secrets in the **OS keyring** (macOS Keychain via `zalando/go-keyring`). Tokens never go in the config file.
+Setup writes `~/.config/dev-agent/config.yaml` (mode `0600`) and stores secrets in the **OS keyring**. Tokens never go in the config file.
+
+## Happy path
+
+```bash
+dev-agent issues              # list / select
+dev-agent run APP-142         # create persisted task + plan
+dev-agent resume              # implement → validate → commit → PR
+dev-agent status              # inspect active work
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `dev-agent` | Welcome / status when configured |
+| `dev-agent setup` | First-time wizard |
+| `dev-agent config` | Inspect / update settings |
+| `dev-agent doctor` | Validate config and tools |
+| `dev-agent issues` | List / search / select Jira issues |
+| `dev-agent run KEY` | Start or attach a persisted task |
+| `dev-agent status` | Show active (or `--all`) tasks |
+| `dev-agent resume [ID\|KEY]` | Resume work / answer clarifications / continue pipeline |
+
+### Issues
+
+```bash
+dev-agent issues
+dev-agent issues --project APP --status "To Do"
+dev-agent issues --select APP-142
+```
+
+Interactive: `#` select, `/text` search, `f` filter, `r` refresh, `q` quit.
 
 ## Configuration
 
@@ -42,83 +68,47 @@ Setup writes `~/.config/dev-agent/config.yaml` (mode `0600`) and stores secrets 
 | Config file | Middle |
 | Built-in defaults | Lowest |
 
-Useful commands:
-
 ```bash
-dev-agent config show          # redacted view
+dev-agent config show
 dev-agent config set mode autonomous
 dev-agent config set-secret jira_token
 dev-agent config path
-dev-agent doctor
 ```
 
-Override paths:
+Overrides: `DEV_AGENT_CONFIG_DIR`, `DEV_AGENT_DATA_DIR`, `--config`, `DEV_AGENT_JIRA_TOKEN`, `CURSOR_API_KEY`.
 
-- `DEV_AGENT_CONFIG_DIR` — config directory
-- `DEV_AGENT_DATA_DIR` — local data (task DB)
-- `--config /path/to/config.yaml` — explicit file
+See [config.example.yaml](config.example.yaml).
 
-See [config.example.yaml](config.example.yaml) for the full schema.
+## Safety
 
-## Commands (current)
+- Secrets in OS keyring only; redacted in `config show`
+- Never commits on protected branches (`main`/`master`)
+- Task branches: `agent/<KEY>-slug`
+- Explicit staging only (never `git add .`)
+- Refuses likely secret files
+- Bounded repair attempts
+- Creates PRs via `gh` but **never merges**
+- Treats Jira/file content as untrusted input
 
-| Command | Description |
-|---------|-------------|
-| `dev-agent` | Welcome / status when configured |
-| `dev-agent setup` | First-time wizard |
-| `dev-agent config` | Inspect / update settings |
-| `dev-agent doctor` | Validate config and tools |
-| `dev-agent issues` | List / search / select Jira issues |
-| `dev-agent run KEY` | Start or attach a persisted task for an issue |
-| `dev-agent status` | Show active (or `--all`) tasks |
-| `dev-agent resume [ID\|KEY]` | Resume paused work / answer clarifications |
+## Persistence
 
-### Cursor engine
+SQLite at `~/.local/share/dev-agent/tasks.db` via pure-Go `modernc.org/sqlite` (**no CGO**).
 
-See [docs/cursor-engine.md](docs/cursor-engine.md) for verified CLI flags, automation level, and limits.
+## Docs
 
-### Task persistence
-
-Tasks are stored in SQLite at `~/.local/share/dev-agent/tasks.db` (override with `DEV_AGENT_DATA_DIR`). The driver is pure Go (`modernc.org/sqlite`) and does **not** require CGO.
-
-States include clarification wait, failure, and cancellation so work can be inspected and resumed safely.
-
-### Git safety
-
-- Never commits on `main`/`master` (configurable protected branches)
-- Creates `agent/<KEY>-slug` task branches
-- Stages explicit paths only (never `git add .`)
-- Refuses likely secret files (`.env`, `*.pem`, etc.)
-- Bounded repair loop after validation failures (`validation.repair_attempts`)
-- Pushes the task branch and opens a GitHub PR via `gh` — **never merges**
-
-### Issues
-
-```bash
-dev-agent issues
-dev-agent issues --project APP --status "To Do"
-dev-agent issues --search auth
-dev-agent issues --select APP-142
-```
-
-Interactive commands: `#` select by number, `/text` search, `f` filter, `r` refresh, `q` quit.
-
-For automation, `DEV_AGENT_JIRA_TOKEN` can supply the API token instead of the keyring.
-
-## Security
-
-- Secrets live in the OS keyring, not YAML.
-- `config show` and logs never print token values.
-- Do not commit `.env` files or real credentials.
+- [Architecture](docs/architecture.md)
+- [Cursor engine](docs/cursor-engine.md)
+- [Troubleshooting](docs/troubleshooting.md)
 
 ## Development
 
 ```bash
-gofmt -w .
-go vet ./...
-go test ./...
+make fmt vet test
 ```
 
-## License
+## Known MVP limits
 
-Private / personal use unless otherwise stated.
+- Jira Cloud read-only (no status updates/comments unless you extend later)
+- GitHub PRs only (`gh`)
+- Numbered-list CLI (no full-screen TUI)
+- Engine success ≠ verified correct change; validation + your review still required
