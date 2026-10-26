@@ -69,8 +69,15 @@ See [config.example.yaml](config.example.yaml) for the full schema.
 | `dev-agent config` | Inspect / update settings |
 | `dev-agent doctor` | Validate config and tools |
 | `dev-agent issues` | List / search / select Jira issues |
+| `dev-agent run KEY` | Start or attach a persisted task for an issue |
+| `dev-agent status` | Show active (or `--all`) tasks |
+| `dev-agent resume [ID\|KEY]` | Resume paused work / answer clarifications |
 
-Upcoming: `run`, `status`, `resume`.
+### Task persistence
+
+Tasks are stored in SQLite at `~/.local/share/dev-agent/tasks.db` (override with `DEV_AGENT_DATA_DIR`). The driver is pure Go (`modernc.org/sqlite`) and does **not** require CGO.
+
+States include clarification wait, failure, and cancellation so work can be inspected and resumed safely.
 
 ### Issues
 
