@@ -106,8 +106,7 @@ func newResumeCmd() *cobra.Command {
 			case workflow.StateValidating, workflow.StateRepairing:
 				return runValidateAndCommit(cmd, cfg, db, task)
 			case workflow.StateReadyForPR:
-				fmt.Fprintln(cmd.OutOrStdout(), "Task is READY_FOR_PR. PR creation arrives in the next milestone.")
-				return nil
+				return runCreatePR(cmd, cfg, db, task)
 			default:
 				fmt.Fprintf(cmd.OutOrStdout(), "No automatic action for state %s.\n", task.State)
 				return nil

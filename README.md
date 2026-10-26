@@ -90,6 +90,7 @@ States include clarification wait, failure, and cancellation so work can be insp
 - Stages explicit paths only (never `git add .`)
 - Refuses likely secret files (`.env`, `*.pem`, etc.)
 - Bounded repair loop after validation failures (`validation.repair_attempts`)
+- Pushes the task branch and opens a GitHub PR via `gh` — **never merges**
 
 ### Issues
 
